@@ -32,9 +32,10 @@ func main() {
 		w.Write(jsonResponse)
 	})
 
-	http.HandleFunc("/register", handlers.RegisterHandler)
 	http.HandleFunc("/login", handlers.LoginHandler)
+	http.HandleFunc("/register", handlers.RegisterHandler)
 	http.HandleFunc("/reset_password", handlers.ResetPasswordHandler)
+	http.HandleFunc("/show_users", handlers.ShowUsersHandler)
 
 	http.ListenAndServe(":8080", nil)
 }

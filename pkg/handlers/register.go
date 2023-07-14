@@ -25,6 +25,10 @@ type RegisterResponse struct {
 	Message string `json:"message"`
 }
 
+type UsersResponse struct {
+	Users []User `json:"users"`
+}
+
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var request RegisterRequest
 
@@ -59,4 +63,29 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(RegisterResponse{
 		Message: "Registration successful",
 	})
+}
+
+func ShowUsersHandler(w http.ResponseWriter, r *http.Request) {
+	var users []User
+
+	// Add each user from the mockDB
+	for _, user := range mockDB {
+		users = append(users, user)
+	}
+
+	// Create response with users
+	response := UsersResponse{
+		Users: users,
+	}
+
+	// Convert to JSON
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Send the response
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }
