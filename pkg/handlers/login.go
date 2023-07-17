@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 	"os"
+	"html/template"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/joho/godotenv"
@@ -22,9 +23,16 @@ type LoginResponse struct {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var request LoginRequest
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	err := godotenv.Load(".env")
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	err = godotenv.Load(".env")
 	if err != nil {
 		fmt.Println("Error loading .env file")
 		return
@@ -38,19 +46,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	user, ok := mockDB[request.Username]
+	user, ok := mockDB[username]
 	if !ok {
 		http.Error(w, "User not found", http.StatusBadRequest)
 		return
 	}
 
-	hash := sha256.Sum256([]byte(request.Password))
+	hash := sha256.Sum256([]byte(password))
 	hashedPassword := fmt.Sprintf("%x", hash)
 
 	if user.Password != hashedPassword {
@@ -61,12 +63,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	expirationTime := time.Now().Add(5 * time.Minute)
 
 	claims := &jwt.StandardClaims{
-		Subject:   request.Username,
+		Subject:   username,
 		ExpiresAt: expirationTime.Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(secretKey)) // TODO: Use a more secure key in production
+	tokenString, err := token.SignedString([]byte(secretKey))
 
 	if err != nil {
 		http.Error(w, "Failed to create token", http.StatusInternalServerError)
@@ -77,4 +79,16 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(LoginResponse{
 		Token: tokenString,
 	})
+}
+
+func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("templates/login.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, nil); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

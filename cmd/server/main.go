@@ -46,7 +46,13 @@ func main() {
 		w.Write(jsonResponse)
 	})
 
-	http.Handle("/login", loggingMiddleware(http.HandlerFunc(handlers.LoginHandler)))
+	http.Handle("/login", loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+				handlers.LoginPageHandler(w, r)
+		} else if r.Method == http.MethodPost {
+				handlers.LoginHandler(w, r)
+		}
+	})))
 
 	http.Handle("/register", loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
