@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"log"
+	"time"
+
 	"github.com/francoabaroa/authgo/pkg/handlers"
 )
 
@@ -12,6 +15,17 @@ type HelloResponse struct {
 
 type SuccessResponse struct {
 	Success string `json:"success"`
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+        log.Printf("Started %s %s", r.Method, r.URL.Path)
+
+        next.ServeHTTP(w, r)
+
+        log.Printf("Completed %s in %v", r.URL.Path, time.Since(start))
+    })
 }
 
 func main() {
@@ -32,10 +46,11 @@ func main() {
 		w.Write(jsonResponse)
 	})
 
-	http.HandleFunc("/login", handlers.LoginHandler)
-	http.HandleFunc("/register", handlers.RegisterHandler)
-	http.HandleFunc("/reset_password", handlers.ResetPasswordHandler)
-	http.HandleFunc("/show_users", handlers.ShowUsersHandler)
+	http.Handle("/login", loggingMiddleware(http.HandlerFunc(handlers.LoginHandler)))
+	http.Handle("/register", loggingMiddleware(http.HandlerFunc(handlers.RegisterHandler)))
+	http.Handle("/reset_password", loggingMiddleware(http.HandlerFunc(handlers.ResetPasswordHandler)))
+	http.Handle("/show_users", loggingMiddleware(http.HandlerFunc(handlers.ShowUsersHandler)))
 
-	http.ListenAndServe(":8080", nil)
+	log.Println("Starting server on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
