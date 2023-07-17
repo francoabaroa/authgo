@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"html/template"
 )
 
 type User struct {
@@ -30,39 +31,52 @@ type UsersResponse struct {
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	var request RegisterRequest
+    err := r.ParseForm()
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
 
-	// Decode the JSON request body into the struct
-	err := json.NewDecoder(r.Body).Decode(&request)
+    username := r.FormValue("username")
+    email := r.FormValue("email")
+    password := r.FormValue("password")
+
+    // Check if the username already exists in the mockDB
+    if _, exists := mockDB[username]; exists {
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(RegisterResponse{
+            Message: "Username or email already exists",
+        })
+        return
+    }
+
+    // Hash the password
+    hash := sha256.Sum256([]byte(password))
+    hashedPassword := fmt.Sprintf("%x", hash)
+
+    // Insert into the mockDB
+    mockDB[username] = User{
+        Username: username,
+        Email:    email,
+        Password: hashedPassword,
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(RegisterResponse{
+        Message: "Registration successful",
+    })
+}
+
+func RegisterPageHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("templates/register.html")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Check if the username already exists in the mockDB
-	if _, exists := mockDB[request.Username]; exists {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(RegisterResponse{
-			Message: "Username or email already exists",
-		})
-		return
+	if err := tmpl.Execute(w, nil); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	// Hash the password
-	hash := sha256.Sum256([]byte(request.Password))
-	hashedPassword := fmt.Sprintf("%x", hash)
-
-	// Insert into the mockDB
-	mockDB[request.Username] = User{
-		Username: request.Username,
-		Email:    request.Email,
-		Password: hashedPassword,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(RegisterResponse{
-		Message: "Registration successful",
-	})
 }
 
 func ShowUsersHandler(w http.ResponseWriter, r *http.Request) {

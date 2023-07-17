@@ -47,7 +47,15 @@ func main() {
 	})
 
 	http.Handle("/login", loggingMiddleware(http.HandlerFunc(handlers.LoginHandler)))
-	http.Handle("/register", loggingMiddleware(http.HandlerFunc(handlers.RegisterHandler)))
+
+	http.Handle("/register", loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+				handlers.RegisterPageHandler(w, r)
+		} else if r.Method == http.MethodPost {
+				handlers.RegisterHandler(w, r)
+		}
+	})))
+
 	http.Handle("/reset_password", loggingMiddleware(http.HandlerFunc(handlers.ResetPasswordHandler)))
 	http.Handle("/show_users", loggingMiddleware(http.HandlerFunc(handlers.ShowUsersHandler)))
 
