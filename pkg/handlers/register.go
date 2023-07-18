@@ -41,13 +41,15 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
     email := r.FormValue("email")
     password := r.FormValue("password")
 
-    // Check if the username already exists in the mockDB
-    if _, exists := mockDB[username]; exists {
-        w.Header().Set("Content-Type", "application/json")
-        json.NewEncoder(w).Encode(RegisterResponse{
-            Message: "Username or email already exists",
-        })
-        return
+    // Check if the username or email already exists in the mockDB
+    for _, user := range mockDB {
+        if user.Username == username || user.Email == email {
+            w.Header().Set("Content-Type", "application/json")
+            json.NewEncoder(w).Encode(RegisterResponse{
+                Message: "Username or email already exists",
+            })
+            return
+        }
     }
 
     // Hash the password
