@@ -7,8 +7,12 @@
 
 <body>
   <h1>Welcome to Authgo{{if .Username}}, {{.Username}}{{end}}!</h1>
+  {{if .Username}}
+  <button onclick="location.href='/logout'">Logout</button>
+  {{else}}
   <a href="/register"><button>Register</button></a>
   <a href="/login"><button>Login</button></a>
+  {{end}}
 </body>
 
 </html>

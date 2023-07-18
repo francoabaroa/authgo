@@ -44,6 +44,7 @@ func main() {
 	})))
 
 	http.Handle("/reset_password", loggingMiddleware(http.HandlerFunc(handlers.ResetPasswordHandler)))
+	http.Handle("/logout", loggingMiddleware(http.HandlerFunc(handlers.LogoutHandler)))
 	http.Handle("/show_users", loggingMiddleware(http.HandlerFunc(handlers.ShowUsersHandler)))
 
 	log.Println("Starting server on :8080")
