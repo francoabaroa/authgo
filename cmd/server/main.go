@@ -1,21 +1,17 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/francoabaroa/authgo/pkg/handlers"
 )
 
-type HelloResponse struct {
-	Hello string `json:"hello"`
-}
-
-type SuccessResponse struct {
-	Success string `json:"success"`
-}
+const (
+	GET  = http.MethodGet
+	POST = http.MethodPost
+)
 
 func loggingMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,36 +25,21 @@ func loggingMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-
-		response := SuccessResponse{
-			Success: "ful",
-		}
-
-		jsonResponse, err := json.Marshal(response)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonResponse)
-	})
+	http.Handle("/", loggingMiddleware(http.HandlerFunc(handlers.WelcomePageHandler)))
 
 	http.Handle("/login", loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-				handlers.LoginPageHandler(w, r)
-		} else if r.Method == http.MethodPost {
-				handlers.LoginHandler(w, r)
+		if r.Method == GET {
+			handlers.LoginPageHandler(w, r)
+		} else if r.Method == POST {
+			handlers.LoginHandler(w, r)
 		}
 	})))
 
 	http.Handle("/register", loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-				handlers.RegisterPageHandler(w, r)
-		} else if r.Method == http.MethodPost {
-				handlers.RegisterHandler(w, r)
+		if r.Method == GET {
+			handlers.RegisterPageHandler(w, r)
+		} else if r.Method == POST {
+			handlers.RegisterHandler(w, r)
 		}
 	})))
 
