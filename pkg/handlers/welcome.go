@@ -12,7 +12,17 @@ func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    if err := tmpl.Execute(w, nil); err != nil {
+    // Try to get the user cookie
+    cookie, err := r.Cookie("user")
+    var data interface{} // Data to pass to the template
+    if err == nil {
+        // If the cookie is found, pass the username to the template
+        data = map[string]string{
+            "Username": cookie.Value,
+        }
+    }
+
+    if err := tmpl.Execute(w, data); err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }
 }

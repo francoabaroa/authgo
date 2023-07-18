@@ -2,14 +2,12 @@ package handlers
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 	"os"
 	"html/template"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/joho/godotenv"
 )
 
@@ -60,28 +58,26 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expirationTime := time.Now().Add(5 * time.Minute)
-
-	claims := &jwt.StandardClaims{
-		Subject:   username,
-		ExpiresAt: expirationTime.Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(secretKey))
-
-	if err != nil {
-		http.Error(w, "Failed to create token", http.StatusInternalServerError)
-		return
-	}
-
-	// TODO: store JWTs in HTTP-only cookies in production
-	json.NewEncoder(w).Encode(LoginResponse{
-		Token: tokenString,
+	// Set the user cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:    "user",
+		Value:   username,
+		Path:    "/",
+		Expires: time.Now().Add(24 * time.Hour), // Cookie expires after 24 hours
 	})
+
+	// Redirect the user to the root route
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("user")
+    if err == nil {
+        // If there is no error, a cookie was found -> user is logged in
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
 	tmpl, err := template.ParseFiles("templates/login.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

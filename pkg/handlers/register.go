@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"html/template"
+	"time"
 )
 
 type User struct {
@@ -63,22 +64,40 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
         Password: hashedPassword,
     }
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(RegisterResponse{
-        Message: "Registration successful",
+    // Set the user cookie
+    http.SetCookie(w, &http.Cookie{
+        Name:    "user",
+        Value:   username,
+        Path:    "/",
+        Expires: time.Now().Add(24 * time.Hour), // Cookie expires after 24 hours
     })
+
+    // Redirect the user to the root route
+    http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func RegisterPageHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("templates/register.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+    // Check for a "user" cookie
+    _, err := r.Cookie("user")
 
-	if err := tmpl.Execute(w, nil); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+    // If the cookie exists (no error), the user is already logged in
+    if err == nil {
+        // Redirect the user to the main page
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // The user is not logged in, serve them the registration page
+    tmpl, err := template.ParseFiles("templates/register.html")
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Render the template
+    if err := tmpl.Execute(w, nil); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
 }
 
 func ShowUsersHandler(w http.ResponseWriter, r *http.Request) {
