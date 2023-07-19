@@ -1,11 +1,17 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/francoabaroa/authgo/pkg/handlers"
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -14,17 +20,45 @@ const (
 )
 
 func loggingMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        start := time.Now()
-        log.Printf("Started %s %s", r.Method, r.URL.Path)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		log.Printf("Started %s %s", r.Method, r.URL.Path)
 
-        next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r)
 
-        log.Printf("Completed %s in %v", r.URL.Path, time.Since(start))
-    })
+		log.Printf("Completed %s in %v", r.URL.Path, time.Since(start))
+	})
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
+	host := os.Getenv("DB_HOST")
+	port, _ := strconv.Atoi(os.Getenv("DB_PORT")) // convert port to int
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	// Database connection
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	err = db.Ping()
+	if err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
+
+	// Provide db connection to handlers
+	handlers.Init(db)
+
 	http.Handle("/", loggingMiddleware(http.HandlerFunc(handlers.WelcomePageHandler)))
 
 	http.Handle("/login", loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

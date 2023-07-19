@@ -1,24 +1,15 @@
 package handlers
 
 import (
-	"crypto/sha256"
-	"fmt"
+	"database/sql"
 	"net/http"
 	"time"
 	"os"
 	"html/template"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/joho/godotenv"
 )
-
-type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type LoginResponse struct {
-	Token string `json:"token"`
-}
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -32,28 +23,31 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = godotenv.Load(".env")
 	if err != nil {
-		fmt.Println("Error loading .env file")
+		http.Error(w, "Error loading .env file", http.StatusInternalServerError)
 		return
 	}
 
+	// Get secret key from .env file
 	secretKey := os.Getenv("SECRET_KEY")
-
 	if secretKey == "" {
-		fmt.Println("No secret key set in .env file")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	user, ok := mockDB[username]
-	if !ok {
+	// Get hashed password from the database
+	var hashedPassword string
+	err = db.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&hashedPassword)
+	if err == sql.ErrNoRows {
 		http.Error(w, "User not found", http.StatusBadRequest)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	hash := sha256.Sum256([]byte(password))
-	hashedPassword := fmt.Sprintf("%x", hash)
-
-	if user.Password != hashedPassword {
+	// Compare the hashed password with the password provided by the user
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
 		http.Error(w, "Invalid password", http.StatusBadRequest)
 		return
 	}
@@ -71,6 +65,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
+	// Check for a "user" cookie
 	_, err := r.Cookie("user")
     if err == nil {
         // If there is no error, a cookie was found -> user is logged in
@@ -78,12 +73,14 @@ func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+	// Parse the login template
 	tmpl, err := template.ParseFiles("templates/login.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Render the template
 	if err := tmpl.Execute(w, nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

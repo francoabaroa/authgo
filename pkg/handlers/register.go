@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
-	"fmt"
-	"net/http"
+	"golang.org/x/crypto/bcrypt"
 	"html/template"
+	"net/http"
 	"time"
 )
 
@@ -14,8 +14,6 @@ type User struct {
 	Email    string
 	Password string
 }
-
-var mockDB = make(map[string]User)
 
 type RegisterRequest struct {
 	Username string `json:"username"`
@@ -31,81 +29,106 @@ type UsersResponse struct {
 	Users []User `json:"users"`
 }
 
+// RegisterHandler handles user registration
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-    err := r.ParseForm()
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    username := r.FormValue("username")
-    email := r.FormValue("email")
-    password := r.FormValue("password")
+	username := r.FormValue("username")
+	email := r.FormValue("email")
+	password := r.FormValue("password")
 
-    // Check if the username or email already exists in the mockDB
-    for _, user := range mockDB {
-        if user.Username == username || user.Email == email {
-            w.Header().Set("Content-Type", "application/json")
-            json.NewEncoder(w).Encode(RegisterResponse{
-                Message: "Username or email already exists",
-            })
-            return
-        }
-    }
+	// Check if the username or email already exists in the DB
+	var userID int
+	err = db.QueryRow("SELECT id FROM users WHERE username = $1 OR email = $2", username, email).Scan(&userID)
+	if err != sql.ErrNoRows {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(RegisterResponse{
+			Message: "Username or email already exists",
+		})
+		return
+	}
 
-    // Hash the password
-    hash := sha256.Sum256([]byte(password))
-    hashedPassword := fmt.Sprintf("%x", hash)
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    // Insert into the mockDB
-    mockDB[username] = User{
-        Username: username,
-        Email:    email,
-        Password: hashedPassword,
-    }
+	// Insert into the DB
+	_, err = db.Exec("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", username, email, string(hashedPassword))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    // Set the user cookie
-    http.SetCookie(w, &http.Cookie{
-        Name:    "user",
-        Value:   username,
-        Path:    "/",
-        Expires: time.Now().Add(24 * time.Hour), // Cookie expires after 24 hours
-    })
+	// Set the user cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:    "user",
+		Value:   username,
+		Path:    "/",
+		Expires: time.Now().Add(24 * time.Hour), // Cookie expires after 24 hours
+	})
 
-    // Redirect the user to the root route
-    http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// RegisterPageHandler serves the registration page
 func RegisterPageHandler(w http.ResponseWriter, r *http.Request) {
-    // Check for a "user" cookie
-    _, err := r.Cookie("user")
+	// Check for a "user" cookie
+	_, err := r.Cookie("user")
 
-    // If the cookie exists (no error), the user is already logged in
-    if err == nil {
-        // Redirect the user to the main page
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
+	// If the cookie exists (no error), the user is already logged in
+	if err == nil {
+		// Redirect the user to the main page
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
 
-    // The user is not logged in, serve them the registration page
-    tmpl, err := template.ParseFiles("templates/register.html")
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	// The user is not logged in, serve them the registration page
+	tmpl, err := template.ParseFiles("templates/register.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    // Render the template
-    if err := tmpl.Execute(w, nil); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
+	// Render the template
+	if err := tmpl.Execute(w, nil); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
+// ShowUsersHandler returns a list of users
 func ShowUsersHandler(w http.ResponseWriter, r *http.Request) {
-	var users []User
+	// Query the DB for users
+	rows, err := db.Query("SELECT username, email, password FROM users")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-	// Add each user from the mockDB
-	for _, user := range mockDB {
+	var users []User
+	for rows.Next() {
+		var user User
+		// Scan the retrieved row into the User struct
+		err = rows.Scan(&user.Username, &user.Email, &user.Password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// Append the User struct to the users slice
 		users = append(users, user)
+	}
+
+	// Check for any errors encountered during iteration
+	if err := rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Create response with users
