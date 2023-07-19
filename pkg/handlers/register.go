@@ -41,6 +41,15 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
+	// Validate that username, email and password are not empty
+	if username == "" || email == "" || password == "" {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(RegisterResponse{
+			Message: "Username, email or password cannot be empty",
+		})
+		return
+	}
+
 	// Check if the username or email already exists in the DB
 	var userID int
 	err = db.QueryRow("SELECT id FROM users WHERE username = $1 OR email = $2", username, email).Scan(&userID)
@@ -76,6 +85,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+
 
 // RegisterPageHandler serves the registration page
 func RegisterPageHandler(w http.ResponseWriter, r *http.Request) {
