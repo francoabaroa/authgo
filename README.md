@@ -2,24 +2,6 @@
 
 This is a simple authentication service built in Go. It includes functionalities such as user registration, login, and viewing all users.
 
-## Project Structure
-
-\```
-.
-├── main.go
-├── go.mod
-├── go.sum
-└── pkg
-    └── handlers
-        ├── register.go
-        ├── login.go
-        └── home.go
-└── templates
-    ├── register.html
-    ├── login.html
-    └── home.html
-\```
-
 ### Requirements
 
 - Go (v1.16 or later)
