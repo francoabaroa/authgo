@@ -24,10 +24,8 @@ You can set these variables in a `.env` file at the root of your project.
 
 1. Make sure you have created your database locally:
 
-2. Run the Go server:
+2. Run the Go server in the terminal:
 
-\```bash
-go run cmd/server/main.go
-\```
+`go run cmd/server/main.go`
 
 This will start the server on `localhost:8080`.
