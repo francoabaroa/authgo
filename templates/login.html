@@ -3,19 +3,81 @@
 
 <head>
   <title>Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #fefae0;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h2,
+    h3 {
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      width: 300px;
+    }
+
+    form input[type=text],
+    form input[type=email],
+    form input[type=password] {
+      margin: 10px 0;
+      padding: 12px 20px;
+      box-sizing: border-box;
+      border: none;
+      border-bottom: 2px solid #bc6c25;
+      font-size: 16px;
+    }
+
+    .button {
+      text-decoration: none;
+      color: #FFFFFF;
+      background-color: #bc6c25;
+      border: none;
+      padding: 15px 20px;
+      text-align: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition-duration: 0.4s;
+      text-align: center;
+      margin-top: 20px;
+      width: 100%;
+      display: inline-block;
+      opacity: 0.9;
+    }
+
+    .button:hover {
+      background-color: #dda15e;
+      color: white;
+      opacity: 1;
+    }
+
+    a {
+      margin-top: 10px;
+    }
+  </style>
 </head>
 
 <body>
   <h2>Authgo</h2>
   <h3>Login</h3>
   <form method="POST" action="/login">
-    <label for="username">Username:</label><br>
-    <input type="text" id="username" name="username" required><br>
-    <label for="password">Password:</label><br>
-    <input type="password" id="password" name="password" required><br>
-    <input type="submit" value="Login">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <input type="submit" class="button" value="Login">
   </form>
-  <a href="/register"><button>Don't have an account? Register</button></a>
+  <a href="/register">Don't have an account? Register</a>
 </body>
 
 </html>
