@@ -7,12 +7,18 @@
   <style>
     body {
       background-color: #fefae0;
-      /* Light blue */
       font-family: 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
+
     button {
-      color: #FFFFFF; /* White text */
-      background-color: #bc6c25; /* Bootstrap primary button color */
+      color: #FFFFFF;
+      background-color: #bc6c25;
       border: none;
       padding: 10px 20px;
       text-align: center;
@@ -23,9 +29,15 @@
       transition-duration: 0.4s;
       cursor: pointer;
     }
+
     button:hover {
-      background-color: #dda15e; /* Darken the bootstrap primary color */
+      background-color: #dda15e;
       color: white;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
     }
   </style>
 </head>
@@ -35,8 +47,10 @@
   {{if .Username}}
   <button onclick="location.href='/logout'">Logout</button>
   {{else}}
-  <a href="/register"><button>Register</button></a>
-  <a href="/login"><button>Login</button></a>
+  <div class="button-container">
+    <a href="/register"><button>Register</button></a>
+    <a href="/login"><button>Login</button></a>
+  </div>
   {{end}}
 </body>
 
