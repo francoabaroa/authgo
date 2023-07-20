@@ -1,6 +1,6 @@
 # Authentication Service in Go
 
-This is a simple authentication service built in Go. It includes functionalities such as user registration, login, and viewing all users.
+This is a simple experimental authentication service built in Go. It includes functionalities such as user registration, login, and viewing all users.
 
 ### Requirements
 

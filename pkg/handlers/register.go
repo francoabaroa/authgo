@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 	"time"
+	"encoding/json"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -13,16 +13,6 @@ type User struct {
 	Username string
 	Email    string
 	Password string
-}
-
-type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type RegisterResponse struct {
-	Message string `json:"message"`
 }
 
 type UsersResponse struct {
@@ -43,10 +33,10 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate that username, email and password are not empty
 	if username == "" || email == "" || password == "" {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(RegisterResponse{
-			Message: "Username, email or password cannot be empty",
-		})
+		// Render the error page
+		if err := t.ExecuteTemplate(w, "error.html", "Username, email or password cannot be empty"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -54,10 +44,10 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var userID int
 	err = db.QueryRow("SELECT id FROM users WHERE username = $1 OR email = $2", username, email).Scan(&userID)
 	if err != sql.ErrNoRows {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(RegisterResponse{
-			Message: "Username or email already exists",
-		})
+		// Render the error page
+		if err := t.ExecuteTemplate(w, "error.html", "Username or email already exists"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 

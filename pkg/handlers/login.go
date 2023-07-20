@@ -39,7 +39,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var hashedPassword string
 	err = db.QueryRow("SELECT password FROM users WHERE username = $1", username).Scan(&hashedPassword)
 	if err == sql.ErrNoRows {
-		http.Error(w, "User not found", http.StatusBadRequest)
+		// Render the error page
+		if err := t.ExecuteTemplate(w, "error.html", "Username not found"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -49,7 +52,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Compare the hashed password with the password provided by the user
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	if err != nil {
-		http.Error(w, "Invalid password", http.StatusBadRequest)
+		// Render the error page
+		if err := t.ExecuteTemplate(w, "error.html", "Incorrect password"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -68,13 +74,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
 	// Check for a "user" cookie
 	_, err := r.Cookie("user")
-    if err == nil {
-        // If there is no error, a cookie was found -> user is logged in
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
+	if err == nil {
+		// If there is no error, a cookie was found -> user is logged in
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
 
-	// Render the template
+	// Render the login page
 	if err := t.ExecuteTemplate(w, "login.html", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Error</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #fefae0;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h2,
+    h3 {
+      text-align: center;
+    }
+
+    .error {
+      color: #bc6c25;
+    }
+
+    a {
+      margin-top: 10px;
+      text-decoration: none;
+      color: inherit;
+      /* This will make the link color the same as the surrounding text */
+    }
+
+    a:visited {
+      color: inherit;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 class="error">{{.}}</h1>
+  <a href="/">
+    <h2>Go back home</h2>
+  </a>
+</body>
+
+</html>
