@@ -64,11 +64,16 @@
     a {
       margin-top: 10px;
       text-decoration: none;
-        color: inherit; /* This will make the link color the same as the surrounding text */
+        color: inherit;
     }
 
     a:visited {
-        color: inherit;
+      color: inherit;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
     }
   </style>
 </head>
@@ -83,11 +88,26 @@
     <input type="text" id="username" name="username" required>
     <label for="email">Email:</label>
     <input type="email" id="email" name="email" required>
-    <label for="password">Password:</label>
+    <label for="password">Password</label>
     <input type="password" id="password" name="password" required>
+    <div class="checkbox-container">
+      <input type="checkbox" id="showPassword">
+      <label for="showPassword">Show password</label>
+    </div>
     <input type="submit" class="button" value="Register">
   </form>
   <a href="/login">Already registered? Login</a>
+
+  <script>
+    document.getElementById('showPassword').addEventListener('change', function () {
+      var passwordInput = document.getElementById('password');
+      if (this.checked) {
+        passwordInput.type = 'text';
+      } else {
+        passwordInput.type = 'password';
+      }
+    });
+  </script>
 </body>
 
 </html>
