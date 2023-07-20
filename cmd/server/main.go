@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/francoabaroa/authgo/pkg/handlers"
 	"github.com/joho/godotenv"
 )
@@ -31,21 +31,27 @@ func loggingMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file")
+	var psqlInfo string
+
+	if os.Getenv("FLY_ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Println("Warning: No .env file found. Falling back to system environment variables.")
+		}
+
+		host := os.Getenv("DB_HOST")
+		port, _ := strconv.Atoi(os.Getenv("DB_PORT")) // convert port to int
+		user := os.Getenv("DB_USER")
+		password := os.Getenv("DB_PASSWORD")
+		dbname := os.Getenv("DB_NAME")
+
+		psqlInfo = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	} else {
+		psqlInfo = os.Getenv("DATABASE_URL")
 	}
 
-	host := os.Getenv("DB_HOST")
-	port, _ := strconv.Atoi(os.Getenv("DB_PORT")) // convert port to int
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
+	db, err := sql.Open("pgx", psqlInfo)
 
-	// Database connection
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
-	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

@@ -3,9 +3,8 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
-	"time"
 	"os"
-	"html/template"
+	"time"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/joho/godotenv"
@@ -21,10 +20,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	err = godotenv.Load(".env")
-	if err != nil {
-		http.Error(w, "Error loading .env file", http.StatusInternalServerError)
-		return
+	if os.Getenv("FLY_ENV") != "production" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			http.Error(w, "Warning: No .env file found. Falling back to system environment variables.", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Get secret key from .env file
@@ -73,15 +74,8 @@ func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	// Parse the login template
-	tmpl, err := template.ParseFiles("templates/login.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	// Render the template
-	if err := tmpl.Execute(w, nil); err != nil {
+	if err := t.ExecuteTemplate(w, "login.html", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

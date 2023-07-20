@@ -3,10 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"golang.org/x/crypto/bcrypt"
-	"html/template"
 	"net/http"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -86,7 +86,6 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-
 // RegisterPageHandler serves the registration page
 func RegisterPageHandler(w http.ResponseWriter, r *http.Request) {
 	// Check for a "user" cookie
@@ -99,15 +98,8 @@ func RegisterPageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The user is not logged in, serve them the registration page
-	tmpl, err := template.ParseFiles("templates/register.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	// Render the template
-	if err := tmpl.Execute(w, nil); err != nil {
+	if err := t.ExecuteTemplate(w, "register.html", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

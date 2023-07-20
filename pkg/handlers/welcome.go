@@ -2,16 +2,9 @@ package handlers
 
 import (
 	"net/http"
-	"html/template"
 )
 
 func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
-    tmpl, err := template.ParseFiles("templates/welcome.html")
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-
     // Try to get the user cookie
     cookie, err := r.Cookie("user")
     var data interface{} // Data to pass to the template
@@ -22,7 +15,7 @@ func WelcomePageHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    if err := tmpl.Execute(w, data); err != nil {
+    if err := t.ExecuteTemplate(w, "welcome.html", data); err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }
 }
