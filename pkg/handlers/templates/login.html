@@ -63,12 +63,20 @@
 
     a {
       margin-top: 10px;
+      text-decoration: none;
+        color: inherit; /* This will make the link color the same as the surrounding text */
+    }
+
+    a:visited {
+        color: inherit;
     }
   </style>
 </head>
 
 <body>
-  <h2>Authgo</h2>
+  <a href="/">
+    <h1>Authgo</h1>
+  </a>
   <h3>Login</h3>
   <form method="POST" action="/login">
     <label for="username">Username:</label>
