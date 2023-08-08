@@ -4,6 +4,7 @@
 <head>
   <title>Authgo</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Add this line -->
   <style>
     body {
       background-color: #fefae0;
@@ -14,6 +15,13 @@
       justify-content: center;
       height: 100vh;
       margin: 0;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      /* Adjust size as needed for mobile */
+      padding: 10px;
     }
 
     button {
@@ -38,6 +46,8 @@
     .button-container {
       display: flex;
       gap: 10px;
+      flex-wrap: wrap;
+      /* To handle overflow on small screens */
     }
   </style>
 </head>
